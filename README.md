@@ -1,127 +1,237 @@
+
+<?php
+session_start();
+if (!isset($_SESSION['username'])) {
+    header("Location: login.php");
+    exit();
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<style type="text/css">
-body {
-  font-family: Arial, sans-serif;
-  
-  background-color: #f4f4f4;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        /* Reset and General Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-.container {
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
-  width: 100%;
-  text-align: center;
-}
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: #f4f4f9;
+        }
 
-h1 {
-  margin-bottom: 20px;
-}
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: #003366;
+            color: white;
+        }
 
-form {
-  display: flex;
-  flex-direction: column;
-}
+        header img {
+            height: 50px;
+        }
 
-label {
-  margin-top: 10px;
-}
+        header h1 {
+            font-size: 20px;
+            margin-left: 10px;
+        }
 
-input {
-  padding: 10px;
-  margin-top: 5px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
+        footer {
+            background: #003366;
+            color: white;
+            text-align: center;
+            padding: 10px 20px;
+            margin-top: auto;
+        }
 
-.btn {
-  margin-top: 20px;
-  padding: 10px;
-  background: #007bff;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  text-decoration: none;
-}
+        /* Dashboard Layout */
+        .dashboard-container {
+            display: flex;
+            flex: 1;
+            position: relative;
+        }
 
-.btn:hover {
-  background: #0056b3;
-}
-</style>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FUDMA Recommender - Home</title>
-  <link rel="stylesheet" href="styles.css">
+        /* Sidebar Menu */
+        nav {
+            width: 240px;
+            background: #003366;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 10px 0;
+            position: fixed;
+            left: 0;
+            top: 60px;
+            height: calc(100vh - 60px);
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        nav ul li {
+            margin: 10px 0;
+        }
+
+        nav ul li button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            background: #0055cc;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        nav ul li button:hover {
+            background: #0077ff;
+        }
+
+        nav ul li button i {
+            margin-right: 10px;
+        }
+
+        nav.hidden {
+            transform: translateX(-100%);
+        }
+
+        /* Content Area */
+        .content {
+            margin-left: 240px;
+            flex: 1;
+            padding: 20px;
+            background: white;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content iframe {
+            width: 100%;
+            height: calc(100vh - 100px); /* Subtract header and footer height */
+            border: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            nav {
+                width: 240px;
+            }
+
+            .content {
+                margin-left: 0;
+            }
+
+            nav ul li button {
+                font-size: 12px;
+            }
+
+            header h1 {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            nav {
+                width: 240px; /* Maintain the same width as desktop */
+                transform: translateX(-100%);
+                position: fixed;
+                z-index: 10;
+            }
+
+            .content {
+                margin-left: 0;
+            }
+
+            .menu-toggle {
+                display: flex;
+                align-items: center;
+                padding: 10px;
+                background: #003366;
+                color: white;
+                cursor: pointer;
+            }
+
+            .menu-toggle i {
+                font-size: 20px;
+            }
+
+            nav.active {
+                transform: translateX(0);
+            }
+
+            .content iframe {
+                height: calc(100vh - 100px);
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Welcome to FUDMA Course Recommender</h1>
-    <p>This system will help you find the best course based on your UTME scores and WAEC/NECO subjects.</p>
-    <a href="Rec2.html" class="btn">Get Started</a>
-  </div>
+    <!-- Header -->
+    <header>
+        <img src="logo.png" alt="Logo">
+        <h1>Admin Dashboard</h1>
+        <div class="menu-toggle" onclick="toggleMenu()">
+            <i>☰</i>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- Sidebar Menu -->
+        <nav id="sidebar" class="hidden">
+            <ul>
+                <li><button onclick="loadContent('file_case.php')"><i>📄</i> File Case</button></li>
+                <li><button onclick="loadContent('search_case.php')"><i>🔍</i> Search Case</button></li>
+                <li><button onclick="loadContent('reports.php')"><i>📊</i> Reports</button></li>
+                <li><button onclick="loadContent('queries.php')"><i>❓</i> Queries</button></li>
+                <li><button onclick="loadContent('change_password.php')"><i>🔒</i> Change Password</button></li>
+                <li><button onclick="location.href='logout.php'"><i>🚪</i> Logout</button></li>
+            </ul>
+        </nav>
+
+        <!-- Content Area -->
+        <div class="content">
+            <iframe name="contentFrame" src="file_case.php"></iframe>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 Admin Dashboard. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+
+        function toggleMenu() {
+            sidebar.classList.toggle('hidden');
+            sidebar.classList.toggle('active');
+        }
+
+        function loadContent(url) {
+            document.querySelector('iframe').src = url;
+            if (window.innerWidth <= 480) {
+                sidebar.classList.add('hidden');
+            }
+        }
+    </script>
 </body>
-<script type="text/javascript">
-// UTME Form Submission
-document.getElementById('utme-form').addEventListener('submit', function (e) {
-  e.preventDefault();
-  // Store UTME data in localStorage
-  const utmeData = {
-    subject1: document.getElementById('subject1').value,
-    score1: document.getElementById('score1').value,
-    subject2: document.getElementById('subject2').value,
-    score2: document.getElementById('score2').value,
-    subject3: document.getElementById('subject3').value,
-    score3: document.getElementById('score3').value,
-    subject4: document.getElementById('subject4').value,
-    score4: document.getElementById('score4').value,
-  };
-  localStorage.setItem('utmeData', JSON.stringify(utmeData));
-  window.location.href = 'waec-neco.html';
-});
-
-// WAEC/NECO Form Submission
-document.getElementById('waec-neco-form').addEventListener('submit', function (e) {
-  e.preventDefault();
-  // Store WAEC/NECO data in localStorage
-  const waecNecoData = {
-    subject1: document.getElementById('subject1').value,
-    subject2: document.getElementById('subject2').value,
-    subject3: document.getElementById('subject3').value,
-    subject4: document.getElementById('subject4').value,
-    subject5: document.getElementById('subject5').value,
-  };
-  localStorage.setItem('waecNecoData', JSON.stringify(waecNecoData));
-  window.location.href = 'recommendation.html';
-});
-
-// Recommendation Logic
-window.onload = function () {
-  if (window.location.pathname.endsWith('recommendation.html')) {
-    const utmeData = JSON.parse(localStorage.getItem('utmeData'));
-    const waecNecoData = JSON.parse(localStorage.getItem('waecNecoData'));
-
-    // Example recommendation logic
-    let recommendedCourse = 'Computer Science'; // Default recommendation
-    if (utmeData.subject1.toLowerCase().includes('math') && waecNecoData.subject1.toLowerCase().includes('math')) {
-      recommendedCourse = 'Mathematics';
-    } else if (utmeData.subject1.toLowerCase().includes('phy') && waecNecoData.subject1.toLowerCase().includes('phy')) {
-      recommendedCourse = 'Physics';
-    }
-
-    document.getElementById('recommended-course').textContent = recommendedCourse;
-  }
-};
-</script>
 </html>
 
